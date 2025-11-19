@@ -1,0 +1,237 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Математичні Ігри для Дітей</title>
+<style>
+body {
+  font-family: 'Comic Sans MS', sans-serif;
+  background-color: #fdf9f0;
+  text-align: center;
+  margin: 0;
+  padding: 0;
+}
+h1 {
+  color: #ff6f61;
+}
+.menu, .game {
+  display: none;
+}
+.menu.active, .game.active {
+  display: block;
+}
+button {
+  margin: 10px;
+  padding: 10px 20px;
+  font-size: 1em;
+  border: none;
+  border-radius: 10px;
+  background-color: #ffcc66;
+  cursor: pointer;
+}
+#zoo, #gameArea {
+  margin: 20px auto;
+  position: relative;
+  width: 90%;
+  max-width: 600px;
+  height: 400px;
+  border: 3px solid #ffcc66;
+  border-radius: 20px;
+  overflow: hidden;
+}
+#zoo {
+  background-color: #cde7f0;
+}
+.snowflake {
+  width: 60px;
+  height: 60px;
+  background-color: #fff;
+  border-radius: 50%;
+  display: inline-block;
+  margin: 10px;
+  cursor: pointer;
+  transition: transform 0.3s;
+}
+.snowflake.clicked {
+  transform: scale(1.3);
+  background-color: #a0e7ff;
+}
+#gameArea {
+  background-color: #cde7f0;
+}
+.shape {
+  width: 80px;
+  height: 80px;
+  display: inline-block;
+  margin: 10px;
+  cursor: grab;
+}
+.square {
+  background-color: #ffcc66;
+}
+.triangle {
+  width: 0;
+  height: 0;
+  border-left: 40px solid transparent;
+  border-right: 40px solid transparent;
+  border-bottom: 80px solid #ff6666;
+}
+#targets {
+  position: absolute;
+  left: 50%;
+  top: 50px;
+  transform: translateX(-50%);
+}
+.target {
+  width: 80px;
+  height: 80px;
+  position: absolute;
+  border: 2px dashed #888;
+}
+#message {
+  font-size: 1.5em;
+  margin-top: 15px;
+  color: #008000;
+}
+</style>
+</head>
+<body>
+
+<h1>Математичні Ігри для Дітей</h1>
+
+<div class="menu active" id="mainMenu">
+  <button onclick="showGame('zooGame')">Веселий Звіринець</button>
+  <button onclick="showGame('builderGame')">Маленький Будівельник</button>
+</div>
+
+<!-- Звіринець -->
+<div class="game" id="zooGame">
+  <p>Намалюй для пінгвіна <strong>3 сніжинки!</strong></p>
+  <div id="zoo">
+    <div class="snowflake"></div>
+    <div class="snowflake"></div>
+    <div class="snowflake"></div>
+    <div class="snowflake"></div>
+    <div class="snowflake"></div>
+  </div>
+  <div id="messageZoo"></div>
+  <button onclick="resetZoo()">Спробувати знову</button>
+  <button onclick="backToMenu()">Назад в меню</button>
+</div>
+
+<!-- Будівельник -->
+<div class="game" id="builderGame">
+  <p>Склади будинок для кошеняти!</p>
+  <div id="gameArea">
+    <div id="targets">
+      <div class="target" id="squareTarget" style="top:150px; left:-50px;"></div>
+      <div class="target" id="triangleTarget" style="top:70px; left:-50px;"></div>
+    </div>
+  </div>
+  <div>
+    <div class="shape square" draggable="true" id="square"></div>
+    <div class="shape triangle" draggable="true" id="triangle"></div>
+  </div>
+  <div id="messageBuilder"></div>
+  <button onclick="resetBuilder()">Спробувати знову</button>
+  <button onclick="backToMenu()">Назад в меню</button>
+</div>
+
+<script>
+// Головне меню
+function showGame(gameId) {
+  document.getElementById('mainMenu').classList.remove('active');
+  document.getElementById(gameId).classList.add('active');
+}
+
+function backToMenu() {
+  document.querySelectorAll('.game').forEach(g => g.classList.remove('active'));
+  document.getElementById('mainMenu').classList.add('active');
+}// Звіринець
+let count = 0;
+const target = 3;
+const snowflakes = document.querySelectorAll('.snowflake');
+const messageZoo = document.getElementById('messageZoo');
+
+snowflakes.forEach(snowflake => {
+  snowflake.addEventListener('click', () => {
+    if(!snowflake.classList.contains('clicked')) {
+      snowflake.classList.add('clicked');
+      count++;
+      if(count === target) {
+        messageZoo.textContent = "Супер! Пінгвін радіє та танцює! 🎉";
+      } else {
+        messageZoo.textContent = Ти намалював ${count} сніжинки.;
+      }
+    }
+  });
+});
+
+function resetZoo() {
+  count = 0;
+  snowflakes.forEach(sf => sf.classList.remove('clicked'));
+  messageZoo.textContent = "";
+}
+
+// Будівельник
+let square = document.getElementById('square');
+let triangle = document.getElementById('triangle');
+let squareTarget = document.getElementById('squareTarget');
+let triangleTarget = document.getElementById('triangleTarget');
+let messageBuilder = document.getElementById('messageBuilder');
+
+let placed = {square: false, triangle: false};
+
+function allowDrop(ev) {
+  ev.preventDefault();
+}
+
+function drag(ev) {
+  ev.dataTransfer.setData("text", ev.target.id);
+}
+
+function drop(ev, targetShape) {
+  ev.preventDefault();
+  let data = ev.dataTransfer.getData("text");
+  if(data === targetShape) {
+    let shape = document.getElementById(data);
+    let rect = ev.target.getBoundingClientRect();
+    shape.style.position = "absolute";
+    shape.style.left = rect.left + "px";
+    shape.style.top = rect.top + "px";
+    ev.target.appendChild(shape);
+    placed[targetShape] = true;
+    checkWin();
+  } else {
+    messageBuilder.textContent = "Ця фігура не підходить! Спробуй іншу.";
+  }
+}
+
+function checkWin() {
+  if(placed.square && placed.triangle) {
+    messageBuilder.textContent = "Вітаємо! Будинок готовий! 🐱🏠";
+  }
+}
+
+square.addEventListener('dragstart', drag);
+triangle.addEventListener('dragstart', drag);
+
+squareTarget.addEventListener('dragover', allowDrop);
+triangleTarget.addEventListener('dragover', allowDrop);
+
+squareTarget.addEventListener('drop', (ev) => drop(ev, 'square'));
+triangleTarget.addEventListener('drop', (ev) => drop(ev, 'triangle'));
+
+function resetBuilder() {
+  placed = {square: false, triangle: false};
+  messageBuilder.textContent = "";
+  document.body.appendChild(square);
+  document.body.appendChild(triangle);
+  square.style.position = "static";
+  triangle.style.position = "static";
+}
+</script>
+
+</body>
+</html>
